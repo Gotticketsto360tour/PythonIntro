@@ -1,0 +1,151 @@
+\documentclass[letterpaper, 12 pt, conference]{ieeeconf}
+\usepackage{url}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+\usepackage{graphicx}
+
+\title{\LARGE \bf
+NeuralPy
+}
+
+\author{Github: \url{https://github.com/teamsoccult/NeuralPy}}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction to the structure of the code}
+
+We decided early that we wanted to document the code as well as possible, and then upload the whole project to Github. 
+We opted for an overall structure in which tasks of similar nature were grouped into different files. The functions in these files can then be loaded as modules and used in other documents. This is useful in order to avoid having one huge and messy file. In addition, other projects could potentially use only the modules relevant to them. We will now provide a quick overview of the file-structure before discussing design choices, plotting and testing.
+
+The partitioning of tasks resulted in six files: 
+read\_write\_helper.py, math\_helper.py, plots\_helper.py, network\_helper.py, tests.py, learn.py. 
+
+The “helper”-files reflect our attempt at partitioning the tasks into coherent blocks. These form the core of the project and constitute the modules referred to earlier. 
+
+“read\_write\_helper.py” handles tasks B, C, F and G. The functions in this module all have to do with reading, writing and converting files. 
+
+“math\_helper.py” handles tasks H, I, J, K, L and M. It contains functions which deal with linear algebra and math. It basically contains functions that one would usually turn to the numpy library for. All subsequent files rely on this module.  
+We started on task S (optional) but did not quite finish it. That is also in here. 
+
+“plots\_helper.py” handles tasks D, N and O, which are the plotting related tasks. It contains functions which plot images of digits as well as visualize the weights of a neural network as heatplots. 
+
+“network\_helper.py” handles tasks P, Q, R and a partial solution for task S (optional). This module contains functions more directly related to updating, training and testing neural networks.
+
+“test.py” does not handle any specific tasks. It tests the assumptions of the functions from previous modules and showcases functionality. We will say more about this in the section on testing. 
+
+“learn.py” does not handle any specific tasks either. It uses the functions of previous modules to train an initially random neural network on the training dataset from MNIST. This network is then saved, and is then validated against the test dataset from MNIST. 
+In addition, the plots displayed in this report are generated here. 
+
+A quick note on documentation. We wrote extensive docstrings for all the functions we made in this project. These can be found in the respective files, as specified above. We will therefore not discuss the details of all functions here and instead refer the reader to the docstrings. 
+
+\section{Design choices}
+
+\subsection{General considerations}
+
+The most characteristic design choices for the project were made in the “math\_helper.py” module. This module is the backbone of the project upon which all the other parts stand. The reason for this is twofold. The first being that all subsequent files use the functions from this module. The second being that this is where we establish how we represent matrices.
+
+\subsection{Object oriented vs functional programming}
+
+Initially, we implemented an object-oriented solution to the problem, by making a class “Matrix”, which contained all the functionality we needed concerning matrices. The issue we encountered was that while most functions lended themselves nicely to an object oriented solution, not all of them did. While it is definitely possible to pursue this strategy, we instead shifted to making functions instead. This allowed us to gather everything related to matrices and math more generally in one module. This seemed more harmonious to us. 
+
+\subsection{Representing a matrix}
+
+Another consideration we had was whether we wanted to conceptualize a matrix in the form, $L[r][c]$ or $L[c][r]$, where $L$ is a list of lists, $c$ refers to columns and $r$ refers to rows. We changed back and forth, and ended up choosing the first option, $L[r][c]$. This choice was made on the basis that the format matched the files that were provided as well as matching the general notation of indexing from linear algebra.
+
+In more conceptual terms, the interpretation of lists as matrices is something we had difficulties wrapping our minds around. The core issue is that the dimension of a list is different from the dimensions of a matrix. We became aware of this issue when we realized that we had trouble conveying this during the write-up of docstrings. When possible, we tried to specify what the word “dimension” referred to in the docstrings explicitly i.e. “the dimension of the list” or “the number of columns and rows of the matrix”.
+
+\section{Dimensions}
+
+The key assumption in the operations of linear algebra concerns how two matrices align in terms of number of rows and columns. We found the function “dim\_recursive”, which finds the dimensions of a list using recursion. With two-dimensional lists this will always return two values corresponding to rows and columns. However, when testing this function we realized that this function was not sufficient in itself. For row vectors (one-dimensional lists) it only returns one value (number of columns) while we need it to output both the number of rows and columns.  
+
+To generalize the function, we initially sought to make a decorator function to handle the special case of a one-dimensional list. However, the decorator function is called each time a recursive call is made, so this did not work out. We therefore settled on making a new function, “dim” which uses “dim\_recursive” and solves the issue.
+
+\section{Speed is the issue}
+
+The culmination of all the functions of this project is arguably the “learn”-function. While we did solve the task and have tested that this function works as intended, we realized (too late) that the “learn”-function took an absurd amount of time to run. We estimated that running five epochs with a batch size of 100 images (as is stated in the assignment) would take almost 150 hours, which was too much. 
+
+By timing the different parts of the function, we deduced that the computation that took time was not the complex matrix products, but calculating the accuracy of the network. For this reason, we made a new function, “fast\_learn”. This function is almost identical to the original “learn”-function, except for the key difference that it does not calculate the accuracy of any network during the learning process. This also means that it is impossible to save the best performing network, as we do not calculate how accurate the different networks are. Instead, “fast\_learn” only saves the last network of the learning phase. Although this is not optimal, the function allowed us to save immense amounts of time, and validation against test data (MNIST) shows that it reaches an accuracy of 86\% which we count as a success. 
+
+\section{Plotting}
+%\graphicspath{"../images/}
+
+\begin{figure}[h]
+\caption{\textbf{weights comparison}}
+\centering
+\includegraphics[scale=0.4]{"../images/linear_network"}
+\subcaption{weights provided in task}
+\includegraphics[scale=0.4]{"../images/fast_network"}
+\subcaption{weights of our network}
+\end{figure}
+
+The outputs of our plotting functions resemble the example pictures in the project description. The main focus for us here was not to make the plots more fancy, but rather to make them flexible and useful. The first plotting associated task (task D) will serve as an example of our approach. The task asks us to create the function with two arguments, images and labels, and to show the first few images with an appropriate color map. The function we created can indeed be executed with only these two arguments, as they are the only required arguments of the function. When only these two arguments are specified the function will display the first ten images arranged in a two by five grid of subplots. Having done this however, we wanted to provide the user with more flexibility. Specifically we wanted the user to be able to control how many images (and which ones) they wanted displayed, and to have some control over the way the subplots of the function are organized in the output. To achieve this we gave the function two optional arguments which allow the user to specify which images to use and to control some of the aesthetics. For more information we refer the reader to the docstring. 
+
+\section{Testing}
+
+We were especially keen on testing the code properly, because a lack of testing has (in previous projects) proved to be a continuous nuisance. One issue is that code can run without returning errors, even though they are not operating as intended. To alleviate this issue we wanted to make sure that the functions which only make sense when the input is meaningful do not produce nonsensical output when these assumptions are not met. Instead we want them to give the user an error. For this we implemented exceptions when we deemed it appropriate. We checked that the functions work with proper input, and return errors with improper input in the “test.py” document. Because we intentionally specify inputs to the functions which violate their assumptions, this document returns several errors (mainly ValueError). This is on purpose. 
+
+Besides implementing exceptions into our code to test that our functions work as intended, we also used doctest to test many of our functions - and to show the user examples of usage. This implementation was especially smooth and appropriate in the “math\_helper.py” document, because all the functions there revolve around mathematical operations in which it is easy to specify what the output should be. It was less clear for us how to use this approach for the functions related to plotting, as their output is different from a list or a number. The testing we did of our plotting functions consisted in trying to feed them different input and verify that they worked as intended. Examples of the functionality of our plotting functions can be found in “test.py”. 
+
+\newpage
+\section{Appendix}
+
+In this section we show a brief collection of plots. 
+As we have shown the plots related to task O, 
+we will here showcase plots for tasks D and N. 
+
+The plots for this section were generated in 
+"learn.py". In order to save the images we modified 
+the plotting functions to return the figure. This has 
+the consequence of displaying two plots when the 
+function is run (as compared to only once when
+we simply called plot.show()). 
+
+\subsection{Task D}
+
+As mentioned earlier for task D, we created the function
+so that the user could control exactly which images to
+plot, and influence the arrangement of subplots. 
+Here we show examples of two such plots. 
+
+
+\begin{figure}[h]
+\centering
+\caption{\textbf{plot\_images (task D)}}
+\includegraphics[scale=0.4]{"../images/appendix_plot_images_5_cols"}
+\subcaption{15 images plotted in a three by five grid}
+
+\includegraphics[scale=0.4]{"../images/appendix_plot_images_6_cols"}
+\subcaption{15 images plotted in a three by six grid}
+\end{figure}
+
+\newpage
+\subsection{Task N}
+
+Task N extends on task D in that the user has the 
+option of including predictions. Here, we show a 
+plot with predictions of the network we trained
+against the correct labels. Our network correctly
+classify the first thirty images. However, 
+the function plot\_images\_new
+returns exactly the same output as plot\_images when
+the predictions are correct. To showcase the
+difference the plot below is of images 30-40
+as our network makes errors here. 
+
+\begin{figure}[h]
+\caption{\textbf{plot\_images\_new (task N)}}
+\centering
+\includegraphics[scale=0.4]{"../images/appendix_plot_images_new_predictions"}
+\subcaption{images 30-40, predictions against hand-labels.}
+\end{figure}
+
+
+\end{document}
