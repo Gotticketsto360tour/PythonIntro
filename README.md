@@ -4,7 +4,7 @@ Welcome to the Python tutorial for the bachelors at Cognitive Science! This gith
 
 ## Requirements for the guides
 
-The guide will be using Jupyter Notebooks. These are automatically installed by using {Anaconda}(https://www.anaconda.com/products/individual). 
+The guide will be using Jupyter Notebooks. These are automatically installed by using [Anaconda](https://www.anaconda.com/products/individual). 
 
 ## Getting Started with Python
 
